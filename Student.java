@@ -312,6 +312,10 @@ public void start(Stage primaryStage) {
         examMarks.clear();
     });
 
+        btnAddNewStudent.setOnAction((event) -> {
+        new Student (name.getText() , id.getText() , etc )
+        // some code to do ..
+    }); 
     btnStudentMarks.setOnAction((event) -> {
         table.getItems().size();
         List<String> data = new ArrayList<>();
