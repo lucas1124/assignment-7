@@ -1,344 +1,256 @@
-package task2;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
- public class Student {
-// student propeties
-private final String name;
-private final double id;
-private final double quiz;
-private final double a1;
-private final double a2;
-private final double exam;
-private final double result;
-private final String grade;
-
-//parameterized constructor of the student
-public Student(String name, double id, double quiz, double a1, double   
-
-a2, double exam, double result, String grade) {    
-    this.name = name;
-    this.id = id;
-    this.quiz = quiz;
-    this.a1 = a1;
-    this.a2 = a2;
-    this.exam = exam;
-    this.result = result;
-    this.grade = grade;
-}
-
-/*
-* getter and setter metod for all the properties
-* of students
-*/ 
-
- public String getName() {
-    return name;
-}
-public void setName(String studentName) {
-    studentName = this.name;
-}
-
-public double getId() {
-    return id;
-}
-public void setId(double studentId) {
-    studentId = this.id;
-}
-
-public double getQuiz() {
-    return quiz;
-}
-public void setQuiz(double quizMarks) {
-    quizMarks = this.quiz;
-}
-
-public double getA1() {
-    return a1;
-}
-
-public void setA1(double assignmentOneMarks) {
-    assignmentOneMarks = this.a1;
-}
-
-public double getA2() {
-    return a2;
-}
-public void setA2(double assignmentTwoMarks) {
-    assignmentTwoMarks = this.a2;
-}
-
-public double getExam() {
-    return exam;
-}
-public void setExam(double exam) {
-    exam = this.exam;
-}
-
-public double getResult(){
-    return result;
-}
-
-public void setResult(double result){
-    result = this.result;
-}
-
-public String getGrade(){
-    return grade;
-}
-
-public void setGrade(String grade){
-    grade = this.grade;
-  }
+class MapGenerator {
+	
+	public int map [][];
+	public int brickWidth;
+	public int brickHeight;
+	
+	// this creates the brick of size 3x7
+	public MapGenerator(int row, int col) {
+		map = new int [row][col];
+		for (int i = 0; i < map.length; i++) { 
+			for (int j=0; j< map[0].length;j++) {
+				map[i][j] = 1;
+			}
+		}
+		
+		brickWidth = 540/col;
+		brickHeight = 150/row;
+	}
+	
+	// this draws the bricks
+	public void draw(Graphics2D g) {
+		for (int i = 0; i < map.length; i++) {
+			for (int j=0; j< map[0].length;j++) {
+				if(map[i][j] > 0) {
+					g.setColor(new Color(0XFF8787)); // brick color
+					g.fillRect(j*brickWidth + 80, i*brickHeight + 50, brickWidth, brickHeight);
+					
+					g.setStroke(new BasicStroke(4));
+					g.setColor(Color.BLACK);
+					g.drawRect(j*brickWidth + 80, i*brickHeight + 50, brickWidth, brickHeight);
+				}
+			}
+			
+		}
+	}
+	
+	// this sets the value of brick to 0 if it is hit by the ball
+	public void setBrickValue(int value, int row, int col) {
+		map[row][col] = value;
+	}
 
 }
 
+class GamePlay extends JPanel implements KeyListener, ActionListener  {
+	private boolean play = true;
+	private int score = 0;
+	
+	private int totalBricks = 21;
+	
+	private Timer timer;
+	private int delay = 8;
+	
+	private int playerX = 310;
+	
+	private int ballposX = 120;
+	private int ballposY = 350;
+	private int ballXdir = -1;
+	private int ballYdir = -2;
+	
+	private MapGenerator map;
+	
 
+	public GamePlay() {
+		map = new MapGenerator(3, 7);
+		addKeyListener(this);
+		setFocusable(true);
+		setFocusTraversalKeysEnabled(false);
+		timer = new Timer(delay, this);
+		timer.start();
+	}
 
+	public void paint(Graphics g) {
+		
+		//background color
+		g.setColor(Color.YELLOW);
+		g.fillRect(1, 1, 692, 592);
+		
+		map.draw((Graphics2D)g);
+		
+		g.fillRect(0, 0, 3, 592);
+		g.fillRect(0, 0, 692, 3);
+		g.fillRect(691, 0, 3, 592);
+		
+		g.setColor(Color.blue);
+		g.fillRect(playerX, 550, 100, 12);
+		
+		g.setColor(Color.RED);  // ball color
+		g.fillOval(ballposX, ballposY, 20, 20);
+		
+		g.setColor(Color.black);
+		g.setFont(new Font("MV Boli", Font.BOLD, 25));
+		g.drawString("Score: " + score, 520, 30);
+		
+		
+		if (totalBricks <= 0) { // if all bricks are destroyed then you win
+			play = false;
+			ballXdir = 0;
+			ballYdir = 0;
+			g.setColor(new Color(0XFF6464));
+			g.setFont(new Font("MV Boli", Font.BOLD, 30));
+			g.drawString("You Won, Score: " + score, 190, 300);
+			
+			g.setFont(new Font("MV Boli", Font.BOLD, 20));
+			g.drawString("Press Enter to Restart.", 230, 350);
+		}
+		
+		if(ballposY > 570) { // if ball goes below the paddle then you lose 
+			play = false;
+			ballXdir = 0;
+			ballYdir = 0;
+			g.setColor(Color.BLACK);
+			g.setFont(new Font("MV Boli", Font.BOLD, 30));
+			g.drawString("Game Over, Score: " + score, 190, 300);
+			
+			g.setFont(new Font("MV Boli", Font.BOLD, 20));
+			g.drawString("Press Enter to Restart", 230, 350);
+				
+		} 
+		g.dispose();
+	}
 
+	@Override
+	public void actionPerformed(ActionEvent arg0) {
+		timer.start();
+		if(play) {
+			// Ball - Pedal  interaction 
+			if(new Rectangle(ballposX, ballposY, 20, 20).intersects(new Rectangle(playerX, 550, 100, 8))) {
+				ballYdir = - ballYdir;
+			}
+			for( int i = 0; i<map.map.length; i++) { // Ball - Brick interaction
+				for(int j = 0; j<map.map[0].length; j++) {  // map.map[0].length is the number of columns
+					if(map.map[i][j] > 0) {
+						int brickX = j*map.brickWidth + 80;
+						int brickY = i*map.brickHeight + 50;
+						int brickWidth= map.brickWidth;
+						int brickHeight = map.brickHeight;
+						
+						Rectangle rect = new Rectangle(brickX, brickY, brickWidth, brickHeight);
+						Rectangle ballRect = new Rectangle(ballposX, ballposY, 20,20);
+						Rectangle brickRect = rect;
+						
+						if(ballRect.intersects(brickRect) ) {
+							map.setBrickValue(0, i, j);
+							totalBricks--;
+							score+=5;
+							
+							if(ballposX + 19 <= brickRect.x || ballposX +1 >= brickRect.x + brickRect.width) 
+								ballXdir = -ballXdir;
+							 else {
+								ballYdir = -ballYdir;
+							}
+						}
+						
+					}
+					
+				}
+			}
+			
+			ballposX += ballXdir;
+			ballposY += ballYdir;
+			if(ballposX < 0) { // if ball hits the left wall then it bounces back
+				ballXdir = -ballXdir;
+			}
+			if(ballposY < 0) {  // if ball hits the top wall then it bounces back
+				ballYdir = -ballYdir;
+			}
+			if(ballposX > 670) { // if ball hits the right wall then it bounces back
+				ballXdir = -ballXdir;  
+			
+			}
+			
+		}
+		
+		
+		repaint();
 
+	}
+	
 
+	@Override
+	public void keyTyped(KeyEvent arg0) {
+		
+	}
+	
+	@Override
+	public void keyPressed(KeyEvent arg0) {
+		if(arg0.getKeyCode() == KeyEvent.VK_RIGHT) { // if right arrow key is pressed then paddle moves right
+			if(playerX >= 600) {
+				playerX = 600;
+			} else {
+				moveRight();
+					
+			}
+		}
+		if(arg0.getKeyCode() == KeyEvent.VK_LEFT) { // if left arrow key is pressed then paddle moves left
+			if(playerX < 10) {
+				playerX = 10;
+			} else {
+				moveLeft();
+					
+			}
+		}
+		
+		if(arg0.getKeyCode() == KeyEvent.VK_ENTER) { // if enter key is pressed then game restarts
+			if(!play) {
+				play = true;
+				ballposX = 120;
+				ballposY = 350;
+				ballXdir = -1;
+				ballYdir = -2;
+				score = 0;
+				totalBricks = 21;
+				map = new MapGenerator(3,7);
+				
+				repaint();
+			}
+		}
+		
+	}	
+		public void moveRight() { // paddle moves right by 50 pixels
+			play = true;
+			playerX += 50;
+		}
+		public void moveLeft() { // paddle moves left by 50 pixels
+			play = true;
+			playerX -= 50;
+		}
+		
+	
 
+	@Override
+	public void keyReleased(KeyEvent arg0) {
+		
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-package task2;
-
-import java.util.ArrayList;
-import java.util.List;
-import javafx.scene.control.TextField;
-import javafx.application.Application;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.text.Text;
-import javafx.stage.Stage;
-
-public class Task2 extends Application {
-
-//Create table view
-private final TableView<Student> table = new TableView<>();
-//Collection to display data in table
-private final ObservableList<Student> data =  
-
-FXCollections.observableArrayList();
-
-@Override
-public void start(Stage primaryStage) {
-    // border pane layout
-    BorderPane borderPane = new BorderPane();
-
-    //creating label student name 
-    Text studentNameLabel = new Text("Student Name");
-    // student inout field
-    TextField studentName = new TextField();
-
-    //creating student id label 
-    Text studentIdLabel = new Text("Student ID");
-    //id input field
-    TextField studentId = new TextField();
-
-    //creating label quiz marks
-    Text quizMarksLabel = new Text("Quiz Marks");
-    //quiz mark input field
-    TextField quizMarks = new TextField();
-
-    //creating label assignment1 marks
-    Text assignmentOneMarksLabel = new Text("1st Assignment Marks");
-    //assignment one mark input field
-    TextField assignmentOneMarks = new TextField();
-
-    //creating label assignment2 marks
-    Text assignmentTwoMarksLabel = new Text("2nd Assignment Marks");
-    //assignment two mark input field
-    TextField assignmentTwoMarks = new TextField();
-
-    //creating label assignment2 marks
-    Text examMarksLabel = new Text("Main Exam Marks");
-    //input for exammarks label
-    TextField examMarks = new TextField();
-
-    //Gridpane layout
-    GridPane gridPane = new GridPane();
-
-    //gridPane.setMinSize(600, 400); 
-    gridPane.setPadding(new Insets(20, 20, 20, 20));
-    //set vertical and horizontal gap for gridpane
-    gridPane.setVgap(07);
-    gridPane.setHgap(70);
-
-    //adding labels in the grid 
-    gridPane.add(studentIdLabel, 0, 0);
-    gridPane.add(studentNameLabel, 0, 1);
-    gridPane.add(quizMarksLabel, 0, 2);
-    gridPane.add(assignmentOneMarksLabel, 0, 3);
-    gridPane.add(assignmentTwoMarksLabel, 0, 4);
-    gridPane.add(examMarksLabel, 0, 5);
-
-    //adding text fields in the grid
-    gridPane.add(studentId, 1, 0);
-    gridPane.add(studentName, 1, 1);
-    gridPane.add(quizMarks, 1, 2);
-    gridPane.add(assignmentOneMarks, 1, 3);
-    gridPane.add(assignmentTwoMarks, 1, 4);
-    gridPane.add(examMarks, 1, 5);
-
-    table.setEditable(true);
-    borderPane.setTop(gridPane);
-    Scene scene = new Scene(borderPane);
-
-    //assigning data in the cell of table
-    TableColumn name = new TableColumn("Name");
-    name.setCellValueFactory(new PropertyValueFactory<>("name"));
-
-    TableColumn id = new TableColumn("Id");
-    id.setCellValueFactory(new PropertyValueFactory<>("id"));
-
-    TableColumn quiz = new TableColumn("Quiz");
-    quiz.setCellValueFactory(new PropertyValueFactory<>("quiz"));
-
-    TableColumn a1 = new TableColumn("A1");
-    a1.setCellValueFactory(new PropertyValueFactory<>("a1"));
-
-    TableColumn a2 = new TableColumn("A2");
-    a2.setCellValueFactory(new PropertyValueFactory<>("a2"));
-
-    TableColumn exam = new TableColumn("Exam");
-    exam.setCellValueFactory(new PropertyValueFactory<>("exam"));
-
-    TableColumn result = new TableColumn("Results");
-    //calculating the result of the student..
-    result.setCellValueFactory(new PropertyValueFactory<>("result"));
-
-    TableColumn Grade = new TableColumn("Grade");
-
-    Grade.setCellValueFactory(new PropertyValueFactory<Student, String> 
-
-   ("grade"));
-
-    table.setItems(data);
-    //adding all the data in the cell of the table
-    table.getColumns().addAll(name, id, quiz, a1, a2, exam, result,  
-
-     Grade);
-
-    //creating horizontal box for the display of lower fields
-    HBox box = new HBox();
-    box.setPadding(new Insets(10, 10, 10, 10));
-    Label label = new Label("Average marks :");
-    box.getChildren().add(label);
-    TextField averageMarksLabel = new TextField();
-    averageMarksLabel.setEditable(false);
-    box.getChildren().add(averageMarksLabel);
-    Button btnAverageMarks = new Button("Average Marks");
-
-    box.getChildren().add(btnAverageMarks);
-    Button btnAddNewStudent = new Button("Add new student");
-    btnAddNewStudent.setDisable(false);
-    box.getChildren().add(btnAddNewStudent);
-    Button btnStudentMarks = new Button("Student Marks");
-    box.getChildren().add(btnStudentMarks);
-
-    borderPane.setCenter(table);
-    borderPane.setBottom(box);
-
-    // Setting title to the Stage   
-    primaryStage.setTitle("Grade Processing - Programming in Java 2");
-
-    btnStudentMarks.setOnAction((ActionEvent e) -> {
-        double resultsMarks = (Double.parseDouble(quizMarks.getText()) 
-
-             * (double) 0.05)
-                + (Double.parseDouble(assignmentOneMarks.getText()) * 
-
-      (double) 0.20)
-                + (Double.parseDouble(assignmentTwoMarks.getText()) * 
-
-        (double) 0.25)
-                + (Double.parseDouble(examMarks.getText()) * (double) 
-
-           0.5);
-
-        //checking the conditon for the grade of the student.
-        String grade = "";
-        if (resultsMarks >= 85 && resultsMarks < 100) {
-            grade = "HD";
-        } else if (resultsMarks >= 75 && resultsMarks < 85) {
-            grade = "DI";
-        } else if (resultsMarks >= 65 && resultsMarks < 75) {
-            grade = "CR";
-        } else if (resultsMarks >= 50 && resultsMarks < 65) {
-            grade = "PS";
-        } else if (resultsMarks > 50) {
-            grade = "Fail";
-        }
-        data.add(new Student(
-                studentName.getText(),
-                Integer.parseInt(studentId.getText()),
-                Double.parseDouble(quizMarks.getText()),
-                Double.parseDouble(assignmentOneMarks.getText()),
-                Double.parseDouble(assignmentTwoMarks.getText()),
-                Double.parseDouble(examMarks.getText()),
-                resultsMarks,
-                "HD"
-        ));
-        //clearing the text field
-        studentName.clear();
-        studentId.clear();
-        quizMarks.clear();
-        assignmentOneMarks.clear();
-        assignmentTwoMarks.clear();
-        examMarks.clear();
-    });
-
-        btnAddNewStudent.setOnAction((event) -> {
-        new Student (name.getText() , id.getText() , etc )
-        // some code to do ..
-    }); 
-    btnStudentMarks.setOnAction((event) -> {
-        table.getItems().size();
-        List<String> data = new ArrayList<>();
-        double total_res = 0;
-        for (Student item : table.getItems()) {
-            total_res += item.getResult();
-        }
-        double avg_marks = total_res / table.getItems().size();
-
-        averageMarksLabel.setText(Double.toString(avg_marks));
-
-    });
-
-    // Adding scene to the stage 
-    primaryStage.setScene(scene);
-    primaryStage.setResizable(false);
-    //Displaying the contents of the stage 
-    primaryStage.show();
-    //button event for the new studnet addition bitton
 
 }
-/**
- * @param args the command line arguments
- */
+class Main {
+
+	public static void main(String[] args) {
+		JFrame obj = new JFrame();
+		GamePlay gamePlay = new GamePlay();
+		obj.setBounds(10, 10, 700, 600);
+		obj.setTitle("Brick Breaker");
+		obj.setResizable(false);
+		obj.setVisible(true);
+		obj.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		obj.add(gamePlay);
+		
+	}
 
 }
